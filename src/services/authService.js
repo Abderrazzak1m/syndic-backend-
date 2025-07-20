@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { PrismaClient } = require('@prisma/client');
 const crypto = require('crypto');
+const emailService = require('../utils/emailService');
 
 const prisma = new PrismaClient();
 
@@ -88,8 +89,8 @@ class AuthService {
       }
     });
     
-    // Send setup email (implement email service)
-    await this.sendPasswordSetupEmail(user.email, setupToken);
+    // Send setup email
+    await emailService.sendPasswordSetupEmail(user.email, setupToken);
     
     return { 
       id: user.id, 
@@ -97,22 +98,6 @@ class AuthService {
       role: user.role,
       message: 'User created. Password setup email sent.'
     };
-  }
-
-  async sendPasswordSetupEmail(email, token) {
-    const setupUrl = `${process.env.FRONTEND_URL}/setup-password?token=${token}`;
-    
-    // TODO: Implement actual email sending
-    console.log(`Password setup email for ${email}:`);
-    console.log(`Setup URL: ${setupUrl}`);
-    
-    // Example with nodemailer (install: npm install nodemailer)
-    // const transporter = nodemailer.createTransporter({...});
-    // await transporter.sendMail({
-    //   to: email,
-    //   subject: 'Set up your password',
-    //   html: `<p>Click <a href="${setupUrl}">here</a> to set up your password</p>`
-    // });
   }
 
   async setupPassword(token, password) {
