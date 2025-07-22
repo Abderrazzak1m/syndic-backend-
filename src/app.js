@@ -23,10 +23,26 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 const authRoutes = require('./routes/auth');
+const coproprieteRoutes = require('./routes/copropriete');
+const trancheRoutes = require('./routes/tranche');
+const immeubleRoutes = require('./routes/immeuble');
+const lotRoutes = require('./routes/lot');
+const espaceCommunRoutes = require('./routes/espaceCommun');
+const personneRoutes = require('./routes/personne');
+const contratRoutes = require('./routes/contrat');
+const demandeLocationRoutes = require('./routes/demandeLocation');
 const { swaggerUi, specs } = require('../api-docs/swagger');
 
 // Routes
 app.use('/api/users', authRoutes);
+app.use('/api/coproprietes', coproprieteRoutes);
+app.use('/api/tranches', trancheRoutes);
+app.use('/api/immeubles', immeubleRoutes);
+app.use('/api/lots', lotRoutes);
+app.use('/api/espaces-communs', espaceCommunRoutes);
+app.use('/api/personnes', personneRoutes);
+app.use('/api/contrats', contratRoutes);
+app.use('/api/demandes-location', demandeLocationRoutes);
 
 // Swagger documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));

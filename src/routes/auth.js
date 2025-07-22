@@ -15,7 +15,7 @@ router.get('/me', authenticateToken, authController.getCurrentUser);
 
 // Protected routes
 router.get('/', authenticateToken, authController.getAllUsers);
-router.post('/', authenticateToken, authController.createUser);
+router.post('/', authController.createUser);
 router.put('/:id', authenticateToken, authController.updateUser);
 router.delete('/:id', authenticateToken, authController.deleteUser);
 

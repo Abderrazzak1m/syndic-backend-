@@ -141,7 +141,7 @@
  * /api/users:
  *   get:
  *     tags:
- *       - User Management
+ *       - Authentication
  *     summary: Get all users
  *     description: Retrieve a list of all users
  *     security:
@@ -188,7 +188,7 @@
  *         description: Server error
  *   post:
  *     tags:
- *       - User Management
+ *       - Authentication
  *     summary: Create a new user
  *     description: Create a new user account with email, fullName, and role (password will be set later)
  *     security:
@@ -253,7 +253,7 @@
  * /api/users/{id}:
  *   put:
  *     tags:
- *       - User Management
+ *       - Authentication
  *     summary: Update an existing user
  *     description: Update user information by ID
  *     security:
@@ -309,7 +309,7 @@
  *         description: Forbidden - invalid token
  *   delete:
  *     tags:
- *       - User Management
+ *       - Authentication
  *     summary: Delete a user
  *     description: Delete user by ID
  *     security:

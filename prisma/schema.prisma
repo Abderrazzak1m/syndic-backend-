@@ -19,7 +19,7 @@ model User {
   email            String    @unique
   fullName         String?
   password         String?
-  role             Role  
+  role             Role
   setupToken       String?
   setupTokenExpiry DateTime?
   createdAt        DateTime  @default(now())
@@ -27,3 +27,163 @@ model User {
 
   @@map("users")
 }
+
+// -------------------------
+// Core Business Models
+// -------------------------
+
+model Copropriete {
+  id          Int       @id @default(autoincrement())
+  nom         String
+  adresse     String
+  description String
+  budget      Float
+  superficie  Float     // m²
+
+  tranches    Tranche[]
+  personnes   Personne[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+
+model Tranche {
+  id             Int          @id @default(autoincrement())
+  intitulé       String
+  superficie     Float        // m²
+
+  coproprieteId  Int
+  copropriete    Copropriete  @relation(fields: [coproprieteId], references: [id])
+
+  immeubles      Immeuble[]
+  espaces        EspaceCommun[] 
+
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model Immeuble {
+  id           Int        @id @default(autoincrement())
+  intitulé     String
+  superficie   Float      // m²
+
+  trancheId    Int
+  tranche      Tranche    @relation(fields: [trancheId], references: [id])
+
+  lots         Lot[]
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model Lot {
+  id                       Int        @id @default(autoincrement())
+  intitulé                 String
+  superficie               Float
+  etage                    String
+  quotePart                Float      // %
+  montantDu                Float      // MAD
+
+  // Foreign keys for copropriétaire and locataire
+  coproprietaireId         Int?
+  coproprietaire           Personne?  @relation("CoproprietaireLots", fields: [coproprietaireId], references: [id])
+
+  locataireId              Int?
+  locataire                Personne?  @relation("LocataireLots", fields: [locataireId], references: [id])
+
+  // Contract numbers
+  numeroContratLocation    String?
+  numeroContratAcquisition String?
+
+  immeubleId               Int
+  immeuble                 Immeuble   @relation(fields: [immeubleId], references: [id])
+  contrats                 Contrat[] 
+
+  createdAt                DateTime   @default(now())
+  updatedAt                DateTime   @updatedAt
+}
+
+
+model EspaceCommun {
+  id         Int      @id @default(autoincrement())
+  intitulé   String
+  superficie Float    // in m²
+
+  trancheId  Int
+  tranche    Tranche  @relation(fields: [trancheId], references: [id])
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Personne {
+  id             Int           @id @default(autoincrement())
+  nom            String
+  prenom         String
+  dateNaissance  DateTime?
+  adresse        String
+  email          String        @unique
+  telephone      String
+  sexe           String
+  nationalite    String
+  cin            String        @unique
+  solde          Float         @default(0.0)
+  type           String        // "locataire" or "coproprietaire"
+  statut         String        // "active" or "bloqué"
+
+  coproprieteId  Int
+  copropriete    Copropriete   @relation(fields: [coproprieteId], references: [id])
+
+  lotsPossedes   Lot[]         @relation("CoproprietaireLots")
+  lotsLoues      Lot[]         @relation("LocataireLots")
+
+  contratsCommeLocataire      Contrat[]  @relation("ContratLocataire")
+  contratsCommeCoproprietaire Contrat[]  @relation("ContratCoproprietaire")
+
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model Contrat {
+  id               Int        @id @default(autoincrement())
+
+  lotId            Int
+  lot              Lot        @relation(fields: [lotId], references: [id])
+
+  locataireId      Int
+  locataire        Personne   @relation("ContratLocataire", fields: [locataireId], references: [id])
+
+  coproprietaireId Int
+  coproprietaire   Personne   @relation("ContratCoproprietaire", fields: [coproprietaireId], references: [id])
+
+  dateCreation     DateTime
+  dateExpiration   DateTime?
+  procuration      Boolean    // true = oui, false = non
+  numeroContratLocation    String?
+  Statut                   String // Validé , Résilié
+
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+}
+
+
+model DemandeLocation {
+  id                 Int              @id @default(autoincrement())
+  createdAt          DateTime         @default(now())
+  cinCoproprietaire  String
+
+  lotId              Int
+
+  typeDemande        String      //  "AJOUTER", "ACCORD_PROCURATION", "RESILIER", "RETRAIT_PROCURATION"
+  procuration        Boolean
+
+  infoLocataire      Json
+  infoContrat        Json
+
+  status             String    //  "EN_ATTENTE", "ACCEPTEE", "REFUSEE"
+}
+
+
+
+
