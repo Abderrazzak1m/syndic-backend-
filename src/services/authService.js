@@ -63,7 +63,7 @@ class AuthService {
   async getCurrentUser(userId) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, email: true, role: true, fullName: true }
+      select: { id: true, email: true, role: true, fullName: true, isActive: true }
     });
     
     if (!user) {
@@ -74,7 +74,7 @@ class AuthService {
   }
 
   async createUser(userData) {
-    const { email, fullName, role } = userData;
+    const { email, fullName, role, isActive = true } = userData;
     
     // Generate password setup token
     const setupToken = crypto.randomBytes(32).toString('hex');
@@ -85,6 +85,7 @@ class AuthService {
         email,
         fullName,
         role: this.mapRoleToEnum(role),
+        isActive,
         setupToken,
         setupTokenExpiry
       }
@@ -97,6 +98,7 @@ class AuthService {
       id: user.id, 
       email: user.email, 
       role: user.role,
+      isActive: user.isActive,
       message: 'User created. Password setup email sent.'
     };
   }
@@ -130,21 +132,23 @@ class AuthService {
   }
 
   async updateUser(id, userData) {
-    const { email, fullName, role } = userData;
+    const { email, fullName, role, isActive } = userData;
     
     const user = await prisma.user.update({
       where: { id: parseInt(id) },
       data: { 
         email, 
         fullName, 
-        role: this.mapRoleToEnum(role)
+        role: this.mapRoleToEnum(role),
+        isActive
       }
     });
     
     return { 
       id: user.id, 
       email: user.email, 
-      role: user.role 
+      role: user.role,
+      isActive: user.isActive
     };
   }
 
@@ -161,6 +165,7 @@ class AuthService {
         email: true, 
         role: true, 
         fullName: true,
+        isActive: true,
         createdAt: true,
         updatedAt: true
       }

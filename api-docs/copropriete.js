@@ -11,12 +11,13 @@
  *   get:
  *     tags:
  *       - Coproprietes
- *     summary: Get all coproprietes
+ *     summary: Get all active coproprietes
+ *     description: Returns only coproprietes with status 'active'
  *     security:
  *       - cookieAuth: []
  *     responses:
  *       200:
- *         description: List of coproprietes
+ *         description: List of active coproprietes
  *         content:
  *           application/json:
  *             schema:
@@ -34,12 +35,16 @@
  *                     type: string
  *                   budget:
  *                     type: number
+ *                   status:
+ *                     type: string
+ *                     enum: [active, archived, inactive]
  *       401:
  *         description: Unauthorized
  *   post:
  *     tags:
  *       - Coproprietes
  *     summary: Create a new copropriete
+ *     description: Creates a new copropriete with status automatically set to 'active'
  *     security:
  *       - cookieAuth: []
  *     requestBody:
@@ -67,10 +72,47 @@
  *                 description: Surface area in m²
  *     responses:
  *       201:
- *         description: Copropriete created successfully
+ *         description: Copropriete created successfully with status 'active'
  *       400:
  *         description: Bad request
  */
+
+/**
+ * @swagger
+ * /api/coproprietes/archived:
+ *   get:
+ *     tags:
+ *       - Coproprietes
+ *     summary: Get all archived coproprietes
+ *     description: Returns only coproprietes with status 'archived'
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: List of archived coproprietes
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                   nom:
+ *                     type: string
+ *                   adresse:
+ *                     type: string
+ *                   description:
+ *                     type: string
+ *                   budget:
+ *                     type: number
+ *                   status:
+ *                     type: string
+ *                     enum: [active, archived, inactive]
+ */
+
+
 
 /**
  * @swagger
@@ -96,6 +138,7 @@
  *     tags:
  *       - Coproprietes
  *     summary: Update copropriete
+ *     description: Update all copropriete attributes including status
  *     security:
  *       - cookieAuth: []
  *     parameters:
@@ -122,6 +165,9 @@
  *               superficie:
  *                 type: number
  *                 description: Surface area in m²
+ *               status:
+ *                 type: string
+ *                 enum: [active, archived, inactive]
  *     responses:
  *       200:
  *         description: Copropriete updated successfully

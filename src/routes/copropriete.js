@@ -4,8 +4,11 @@ const coproprieteController = require('../controllers/coproprieteController');
 
 const router = express.Router();
 
-// Get all coproprietes
+// Get all active coproprietes
 router.get('/', authenticateToken, coproprieteController.getAllCoproprietes);
+
+// Get archived coproprietes
+router.get('/archived', authenticateToken, coproprieteController.getArchivedCoproprietes);
 
 // Get copropriete by ID
 router.get('/:id', authenticateToken, coproprieteController.getCoproprieteById);
@@ -15,6 +18,9 @@ router.get('/:id/tranches', authenticateToken, coproprieteController.getTranches
 
 // Create copropriete
 router.post('/', authenticateToken, coproprieteController.createCopropriete);
+
+// Update copropriete status
+router.put('/:id/status', authenticateToken, coproprieteController.updateCoproprieteStatus);
 
 // Update copropriete
 router.put('/:id', authenticateToken, coproprieteController.updateCopropriete);

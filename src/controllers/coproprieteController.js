@@ -57,6 +57,25 @@ class CoproprieteController {
       res.status(500).json({ error: error.message });
     }
   }
+
+  async getArchivedCoproprietes(req, res) {
+    try {
+      const coproprietes = await coproprieteService.getArchivedCoproprietes();
+      res.json(coproprietes);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async updateCoproprieteStatus(req, res) {
+    try {
+      const { status } = req.body;
+      const copropriete = await coproprieteService.updateCoproprieteStatus(req.params.id, status);
+      res.json(copropriete);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  }
 }
 
 module.exports = new CoproprieteController();

@@ -4,6 +4,16 @@ const prisma = new PrismaClient();
 class CoproprieteService {
   async getAllCoproprietes() {
     return await prisma.copropriete.findMany({
+      where: { status: 'active' },
+      include: {
+        tranches: true
+      }
+    });
+  }
+
+  async getArchivedCoproprietes() {
+    return await prisma.copropriete.findMany({
+      where: { status: 'archived' },
       include: {
         tranches: true
       }
@@ -30,16 +40,24 @@ class CoproprieteService {
 
   async createCopropriete(data) {
     const { nom, adresse, description, budget, superficie } = data;
+
     return await prisma.copropriete.create({
-      data: { nom, adresse, description, budget, superficie }
+      data: { nom, adresse, description, budget, superficie, status: 'active' }
     });
   }
 
   async updateCopropriete(id, data) {
-    const { nom, adresse, description, budget, superficie } = data;
+    const { nom, adresse, description, budget, superficie, status } = data;
     return await prisma.copropriete.update({
       where: { id: parseInt(id) },
-      data: { nom, adresse, description, budget, superficie }
+      data: { nom, adresse, description, budget, superficie, status }
+    });
+  }
+
+  async updateCoproprieteStatus(id, status) {
+    return await prisma.copropriete.update({
+      where: { id: parseInt(id) },
+      data: { status }
     });
   }
 

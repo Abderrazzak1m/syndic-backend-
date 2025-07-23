@@ -21,6 +21,7 @@ model User {
   password         String?
   role             Role
   setupToken       String?
+  isActive         Boolean
   setupTokenExpiry DateTime?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
@@ -45,6 +46,7 @@ model Copropriete {
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  status      String
 }
 
 
