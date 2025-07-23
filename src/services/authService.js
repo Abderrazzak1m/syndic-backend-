@@ -50,7 +50,8 @@ class AuthService {
         id: user.id, 
         email: user.email,
         fullName: user.fullName, 
-        role: user.role 
+        role: user.role,
+        isActive: user.isActive
       } 
     };
   }

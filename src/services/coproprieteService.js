@@ -2,14 +2,39 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 class CoproprieteService {
-  async getAllCoproprietes() {
-    return await prisma.copropriete.findMany({
-      where: { status: 'active' },
-      include: {
-        tranches: true
+async getAllCoproprietes() {
+  const coproprietes = await prisma.copropriete.findMany({
+    where: { status: 'active' },
+    include: {
+      tranches: {
+        include: {
+          immeubles: {
+            include: {
+              lots: true
+            }
+          }
+        }
       }
-    });
-  }
+    }
+  });
+
+  // Comptage des lots
+  return coproprietes.map(c => {
+    let lotCount = 0;
+
+    for (const tranche of c.tranches) {
+      for (const immeuble of tranche.immeubles) {
+        lotCount += immeuble.lots.length;
+      }
+    }
+
+    return {
+      ...c,
+      nombreLots: lotCount
+    };
+  });
+}
+
 
   async getArchivedCoproprietes() {
     return await prisma.copropriete.findMany({
