@@ -59,7 +59,8 @@ model Tranche {
   copropriete    Copropriete  @relation(fields: [coproprieteId], references: [id])
 
   immeubles      Immeuble[]
-  espaces        EspaceCommun[] 
+  espaces        EspaceCommun[]
+  assemblees     AssembleeGenerale[]
 
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
@@ -189,3 +190,108 @@ model DemandeLocation {
 
 
 
+// -------------------------
+// AG (Assemblées Générales) Models - SIMPLIFIED
+// -------------------------
+
+enum EtatAG {
+  EN_ATTENTE
+  VALIDE
+  REFUSE
+}
+
+enum StatutSondage {
+  ACTIF
+  TERMINE
+  ANNULE
+}
+
+
+model AssembleeGenerale {
+  id                Int              @id @default(autoincrement())
+  numAG             String           @unique // e.g., "AG-2024-001"
+  enonce            String           // Title/subject of the AG
+  description       String?          // Optional description
+  etat              EtatAG           @default(EN_ATTENTE)
+  datePlanifiee     DateTime?        // Set after sondage completion
+  convocation     String?          // Link to convocation document
+  
+  // Relations
+  trancheId         Int
+  tranche           Tranche          @relation(fields: [trancheId], references: [id])
+
+  // Related sondage
+  sondage           Sondage?
+  pv                Pv?
+  ordreJour         OrdreJour?
+
+
+
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@map("assemblees_generales")
+}
+
+model Sondage {
+  id                Int              @id @default(autoincrement())
+  enonceSondage     String           // "Sélectionnez la date qui vous convient pour l'AG deuxième période"
+  statut            StatutSondage    @default(ACTIF)
+  dateDebut         DateTime         @default(now())
+  dateFin           DateTime         // 48h after dateDebut
+  
+  // Relation to AG
+  assembleId        Int              @unique
+  assemblee         AssembleeGenerale @relation(fields: [assembleId], references: [id], onDelete: Cascade)
+
+  // Date options for voting
+  optionsDate       OptionDate[]
+
+  createdAt         DateTime         @default(now())
+
+  @@map("sondages")
+}
+
+model OptionDate {
+  id               Int              @id @default(autoincrement())
+  dateProposee     DateTime         // Date option for the AG
+  heureProposee    String           // Time like "18h30", "19h00", "20h00"
+  
+  sondageId        Int
+  sondage          Sondage          @relation(fields: [sondageId], references: [id], onDelete: Cascade)
+  
+  nbVotes          Int              @default(0) // Cache for performance
+
+  createdAt        DateTime         @default(now())
+
+  @@map("options_date")
+}
+
+
+model Pv {
+  id                Int              @id @default(autoincrement())
+  assembleeId       Int    @unique
+  assemblee         AssembleeGenerale @relation(fields: [assembleeId], references: [id], onDelete: Cascade)
+
+  contenu           String           // Content of the PV
+  enonce            String           // Title of the PV
+
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@map("proces_verbaux")
+}
+
+model OrdreJour {
+  id                    Int              @id @default(autoincrement())
+  assembleeId           Int              @unique
+  assemblee             AssembleeGenerale @relation(fields: [assembleeId], references: [id], onDelete: Cascade)
+
+  objetOrdreJour        String           // Object/subject of the agenda
+  texteOrdreJour        String           // Text content of the agenda
+
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+
+  @@map("ordres_jour")
+}

@@ -142,11 +142,7 @@ class PersonneService {
     }
     
     return await prisma.personne.findMany({
-      where: whereClause,
-      include: {
-        lots: true,
-        lotsLocataire: true
-      }
+      where: whereClause
     });
   }
 }

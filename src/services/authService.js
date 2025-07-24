@@ -11,7 +11,7 @@ class AuthService {
   mapRoleToEnum(frontendRole) {
     const roleMap = {
       'Comptabilité': 'comptable',
-      'Administration': 'admin', 
+      'Administration': 'admin',  
       'Entretien': 'entretien',
       'RH': 'rh'
     };

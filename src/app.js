@@ -31,6 +31,11 @@ const espaceCommunRoutes = require('./routes/espaceCommun');
 const personneRoutes = require('./routes/personne');
 const contratRoutes = require('./routes/contrat');
 const demandeLocationRoutes = require('./routes/demandeLocation');
+const assembleeGeneraleRoutes = require('./routes/assembleeGeneraleRoutes')
+const sondageRoutes = require('./routes/sondageRoutes');
+const pvRoutes = require('./routes/pvRoutes');
+const ordreJourRoutes = require('./routes/ordreJourRoutes');
+
 const { swaggerUi, specs } = require('../api-docs/swagger');
 
 // Routes
@@ -43,6 +48,12 @@ app.use('/api/espaces-communs', espaceCommunRoutes);
 app.use('/api/personnes', personneRoutes);
 app.use('/api/contrats', contratRoutes);
 app.use('/api/demandes-location', demandeLocationRoutes);
+app.use('/api/assemblee-generale', assembleeGeneraleRoutes);
+app.use('/api/sondage', sondageRoutes);
+app.use('/api/pv', pvRoutes);
+app.use('/api/ordre-jour', ordreJourRoutes);
+
+
 
 // Swagger documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
