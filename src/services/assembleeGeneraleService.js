@@ -94,6 +94,8 @@ async getAGsByTrancheId(trancheId) {
         };
       }
 
+      console.log('-------------------------');
+
       const totalVotes = sondage.optionsDate.reduce(
         (sum, option) => sum + (option.nbVotes ?? 0),
         0
@@ -106,8 +108,7 @@ async getAGsByTrancheId(trancheId) {
       const highestPercentage = totalVotes > 0
         ? ((maxOption.nbVotes ?? 0) / totalVotes) * 100
         : 0;
-
-      if (ag.etat === 'REFUSE') {
+      if (ag.etat !== 'VALIDE') {
         return {
           ...ag,
           etat: this.traduireEtat(ag.etat),
@@ -200,7 +201,14 @@ async getAllAGs() {
       const highestPercentage = totalVotes > 0 
         ? ((maxOption.nbVotes ?? 0) / totalVotes) * 100 
         : 0;
-
+      if (ag.etat !== 'VALIDE') {
+          return {
+            ...ag,
+            etat: this.traduireEtat(ag.etat),
+            datePlanifiee: null,
+            sondageResult: parseFloat(highestPercentage.toFixed(1))
+          };
+        }
       return {
         ...ag,
         etat: this.traduireEtat(ag.etat),
