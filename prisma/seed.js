@@ -1,4 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcryptjs');
+
 const prisma = new PrismaClient();
 
 const lotCounts = {
@@ -9,13 +11,78 @@ const lotCounts = {
   'Résidence Jardin Royal': 52
 };
 
+const etatsAG = ['EN_ATTENTE', 'VALIDE', 'REFUSE'];
+const statutSondage = ['ACTIF', 'TERMINE', 'ANNULE'];
+
+async function seedAGs(trancheId) {
+  for (let i = 1; i <= 7; i++) {
+    const ag = await prisma.assembleeGenerale.create({
+      data: {
+        numAG: `AG-${Date.now()}-${i}`,
+        enonce: `Assemblée Générale ${i}`,
+        description: i % 2 === 0 ? `Description AG ${i}` : null,
+        etat: etatsAG[i % etatsAG.length],
+        trancheId,
+        datePlanifiee: i % 3 === 0 ? new Date(`2025-08-${10 + i}`) : null,
+        convocation: i % 2 === 1 ? `https://example.com/convocation${i}.pdf` : null,
+      }
+    });
+
+    if (i <= 3) {
+      await prisma.sondage.create({
+        data: {
+          enonceSondage: `Choisissez une date pour l'AG ${i}`,
+          statut: statutSondage[i % statutSondage.length],
+          dateDebut: new Date(),
+          dateFin: new Date(Date.now() + 1000 * 60 * 60 * 48),
+          assembleId: ag.id,
+          optionsDate: {
+            create: [
+              {
+                dateProposee: new Date(`2025-08-${10 + i}`),
+                heureProposee: '18h30',
+                nbVotes: 5 + i,
+              },
+              {
+                dateProposee: new Date(`2025-08-${11 + i}`),
+                heureProposee: '20h00',
+                nbVotes: 2 + i,
+              }
+            ]
+          }
+        }
+      });
+    }
+
+    if ([2, 4, 6].includes(i)) {
+      await prisma.ordreJour.create({
+        data: {
+          assembleeId: ag.id,
+          objetOrdreJour: `Objet de l'ordre du jour AG ${i}`,
+          texteOrdreJour: `Texte détaillé de l'ordre du jour pour l'AG ${i}.`
+        }
+      });
+    }
+
+    if ([3, 5, 7].includes(i)) {
+      await prisma.pv.create({
+        data: {
+          assembleeId: ag.id,
+          enonce: `Procès-verbal de l'AG ${i}`,
+          contenu: `Contenu du procès-verbal de l'AG ${i} qui s'est tenue à la date prévue.`
+        }
+      });
+    }
+  }
+}
+
 function generateLotData(index, coproprietaireId, locataireId, immeubleId) {
   return {
     intitulé: `Lot ${100 + index}`,
-    superficie: Math.floor(Math.random() * 50) + 50, // 50–100 m²
-    etage: `${Math.floor(index / 10) + 1}`, // pseudo floor
+    superficie: Math.floor(Math.random() * 50) + 50,
+    etage: `${Math.floor(index / 10) + 1}`,
     quotePart: parseFloat((Math.random() * 10).toFixed(2)),
-    montantDu: Math.floor(Math.random() * 500000) + 500000, // 500k – 1M
+    montantDu: Math.floor(Math.random() * 500000) + 500000,
     numeroContratLocation: `LOC${100 + index}`,
     numeroContratAcquisition: `ACQ${100 + index}`,
     coproprietaireId,
@@ -25,6 +92,22 @@ function generateLotData(index, coproprietaireId, locataireId, immeubleId) {
 }
 
 async function main() {
+  // 🔐 Création de l'utilisateur admin
+  const hashedPassword = await bcrypt.hash('123456', 10);
+  await prisma.user.upsert({
+    where: { email: 'admin@gmail.com' },
+    update: {},
+    create: {
+      email: 'admin@gmail.com',
+      fullName: 'Admin',
+      password: hashedPassword,
+      role: 'admin',
+      isActive: true
+    }
+  });
+
+  console.log('✅ Admin user created');
+
   const coproprietes = await Promise.all([
     prisma.copropriete.create({ data: { nom: 'Résidence Al Andalous', adresse: 'Avenue Mohammed V, Quartier Gueliz, Marrakech', description: 'Résidence moderne située au cœur de Marrakech.', budget: 150000, superficie: 12000, status: 'active' } }),
     prisma.copropriete.create({ data: { nom: 'Résidence Atlas View', adresse: 'Boulevard Zerktouni, Quartier Racine, Casablanca', description: 'Vue panoramique sur les montagnes de l’Atlas.', budget: 200000, superficie: 10000, status: 'active' } }),
@@ -42,6 +125,7 @@ async function main() {
         coproprieteId: copro.id
       }
     });
+    await seedAGs(tranche.id);
 
     const immeuble = await prisma.immeuble.create({
       data: {
@@ -87,7 +171,7 @@ async function main() {
       }
     });
 
-    const numberOfLots = lotCounts[copro.nom] || 10; // fallback to 10 if not listed
+    const numberOfLots = lotCounts[copro.nom] || 10;
     const lots = Array.from({ length: numberOfLots }, (_, i) =>
       generateLotData(i, coproprietaire.id, locataire.id, immeuble.id)
     );
