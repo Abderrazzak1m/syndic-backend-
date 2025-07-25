@@ -81,7 +81,7 @@ async getAGsByTrancheId(trancheId) {
         createdAt: 'desc'
       }
     });
-
+  
     return ags.map(ag => {
       const sondage = ag.sondage;
 
@@ -107,6 +107,14 @@ async getAGsByTrancheId(trancheId) {
         ? ((maxOption.nbVotes ?? 0) / totalVotes) * 100
         : 0;
 
+      if (ag.etat === 'REFUSE') {
+        return {
+          ...ag,
+          etat: this.traduireEtat(ag.etat),
+          datePlanifiee: null,
+          sondageResult: parseFloat(highestPercentage.toFixed(1))
+        };
+      }
       return {
         ...ag,
         etat: this.traduireEtat(ag.etat),

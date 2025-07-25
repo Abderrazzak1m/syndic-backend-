@@ -14,67 +14,154 @@ const lotCounts = {
 const etatsAG = ['EN_ATTENTE', 'VALIDE', 'REFUSE'];
 const statutSondage = ['ACTIF', 'TERMINE', 'ANNULE'];
 
-async function seedAGs(trancheId) {
-  for (let i = 1; i <= 7; i++) {
-    const ag = await prisma.assembleeGenerale.create({
-      data: {
-        numAG: `AG-${Date.now()}-${i}`,
-        enonce: `Assemblée Générale ${i}`,
-        description: i % 2 === 0 ? `Description AG ${i}` : null,
-        etat: etatsAG[i % etatsAG.length],
-        trancheId,
-        datePlanifiee: i % 3 === 0 ? new Date(`2025-08-${10 + i}`) : null,
-        convocation: i % 2 === 1 ? `https://example.com/convocation${i}.pdf` : null,
+async function seedAGsSimple(trancheId) {
+  // AG 1 avec sondage et votes -> VALIDE
+  const ag1 = await prisma.assembleeGenerale.create({
+    data: {
+      numAG: `AG-${Date.now()}-1`,
+      enonce: `Assemblée Générale 1`,
+      etat: 'EN_ATTENTE',
+      trancheId,
+      datePlanifiee: new Date('2025-08-11'),
+      convocation: 'hello'
+    }
+  });
+
+  await prisma.sondage.create({
+    data: {
+      enonceSondage: `Choisissez une date pour l'AG 1`,
+      statut: 'TERMINE',
+      dateDebut: new Date(),
+      dateFin: new Date(Date.now() + 1000 * 60 * 60 * 48),
+      assembleId: ag1.id,
+      optionsDate: {
+        create: [
+          { dateProposee: new Date('2025-08-11'), heureProposee: '18h30', nbVotes: 5 },
+          { dateProposee: new Date('2025-08-12'), heureProposee: '20h00', nbVotes: 3 }
+        ]
       }
-    });
-
-    if (i <= 3) {
-      await prisma.sondage.create({
-        data: {
-          enonceSondage: `Choisissez une date pour l'AG ${i}`,
-          statut: statutSondage[i % statutSondage.length],
-          dateDebut: new Date(),
-          dateFin: new Date(Date.now() + 1000 * 60 * 60 * 48),
-          assembleId: ag.id,
-          optionsDate: {
-            create: [
-              {
-                dateProposee: new Date(`2025-08-${10 + i}`),
-                heureProposee: '18h30',
-                nbVotes: 5 + i,
-              },
-              {
-                dateProposee: new Date(`2025-08-${11 + i}`),
-                heureProposee: '20h00',
-                nbVotes: 2 + i,
-              }
-            ]
-          }
-        }
-      });
     }
+  });
 
-    if ([2, 4, 6].includes(i)) {
-      await prisma.ordreJour.create({
-        data: {
-          assembleeId: ag.id,
-          objetOrdreJour: `Objet de l'ordre du jour AG ${i}`,
-          texteOrdreJour: `Texte détaillé de l'ordre du jour pour l'AG ${i}.`
-        }
-      });
-    }
+  // Mise à jour état AG1 à VALIDE car sondage avec votes
+  await prisma.assembleeGenerale.update({
+    where: { id: ag1.id },
+    data: { etat: 'VALIDE' }
+  });
 
-    if ([3, 5, 7].includes(i)) {
-      await prisma.pv.create({
-        data: {
-          assembleeId: ag.id,
-          enonce: `Procès-verbal de l'AG ${i}`,
-          contenu: `Contenu du procès-verbal de l'AG ${i} qui s'est tenue à la date prévue.`
-        }
-      });
+  // AG 2 avec sondage et votes -> VALIDE
+  const ag2 = await prisma.assembleeGenerale.create({
+    data: {
+      numAG: `AG-${Date.now()}-2`,
+      enonce: `Assemblée Générale 2`,
+      etat: 'EN_ATTENTE',
+      trancheId,
+      datePlanifiee: null,
+      convocation: null
     }
-  }
+  });
+
+  await prisma.sondage.create({
+    data: {
+      enonceSondage: `Choisissez une date pour l'AG 2`,
+      statut: 'ACTIF',
+      dateDebut: new Date(),
+      dateFin: new Date(Date.now() + 1000 * 60 * 60 * 48),
+      assembleId: ag2.id,
+      optionsDate: {
+        create: [
+          { dateProposee: new Date('2025-08-12'), heureProposee: '18h30', nbVotes: 2 },
+          { dateProposee: new Date('2025-08-13'), heureProposee: '20h00', nbVotes: 1 }
+        ]
+      }
+    }
+  });
+
+  // Mise à jour état AG2 à VALIDE car sondage avec votes
+  await prisma.assembleeGenerale.update({
+    where: { id: ag2.id },
+    data: { etat: 'VALIDE' }
+  });
+
+  // AG 3 avec sondage mais sans votes -> reste EN_ATTENTE
+  const ag3 = await prisma.assembleeGenerale.create({
+    data: {
+      numAG: `AG-${Date.now()}-3`,
+      enonce: `Assemblée Générale 3`,
+      etat: 'REFUSE',
+      trancheId,
+      datePlanifiee: null,
+      convocation: ''
+    }
+  });
+
+  await prisma.sondage.create({
+    data: {
+      enonceSondage: `Choisissez une date pour l'AG 3`,
+      statut: 'ACTIF',
+      dateDebut: new Date(),
+      dateFin: new Date(Date.now() + 1000 * 60 * 60 * 48),
+      assembleId: ag3.id,
+      optionsDate: {
+        create: [
+          { dateProposee: new Date('2025-08-13'), heureProposee: '18h30', nbVotes: 1 },
+          { dateProposee: new Date('2025-08-14'), heureProposee: '20h00', nbVotes: 1 },
+          { dateProposee: new Date('2025-08-15'), heureProposee: '19h00', nbVotes: 1 }
+        ]
+      }
+    }
+  });
+
+  // AG 4 sans sondage, état EN_ATTENTE
+  await prisma.assembleeGenerale.create({
+    data: {
+      numAG: `AG-${Date.now()}-4`,
+      enonce: `Assemblée Générale 4`,
+      etat: 'EN_ATTENTE',
+      trancheId,
+      datePlanifiee: null,
+      convocation: null
+    }
+  });
+
+  // AG 5 sans sondage, état EN_ATTENTE
+  await prisma.assembleeGenerale.create({
+    data: {
+      numAG: `AG-${Date.now()}-5`,
+      enonce: `Assemblée Générale 5`,
+      etat: 'EN_ATTENTE',
+      trancheId,
+      datePlanifiee: null,
+      convocation: null
+    }
+  });
+
+  // AG 6 sans sondage, état EN_ATTENTE
+  await prisma.assembleeGenerale.create({
+    data: {
+      numAG: `AG-${Date.now()}-6`,
+      enonce: `Assemblée Générale 6`,
+      etat: 'EN_ATTENTE',
+      trancheId,
+      datePlanifiee: null,
+      convocation: null
+    }
+  });
+
+  // AG 7 sans sondage, état EN_ATTENTE
+  await prisma.assembleeGenerale.create({
+    data: {
+      numAG: `AG-${Date.now()}-7`,
+      enonce: `Assemblée Générale 7`,
+      etat: 'EN_ATTENTE',
+      trancheId,
+      datePlanifiee: null,
+      convocation: null
+    }
+  });
 }
+
+
 
 function generateLotData(index, coproprietaireId, locataireId, immeubleId) {
   return {
@@ -125,7 +212,7 @@ async function main() {
         coproprieteId: copro.id
       }
     });
-    await seedAGs(tranche.id);
+    await seedAGsSimple(tranche.id);
 
     const immeuble = await prisma.immeuble.create({
       data: {
